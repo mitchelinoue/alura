@@ -1,5 +1,7 @@
 import chalk from 'chalk';
 import fs from 'fs';
+import path from'path';
+
 
 function extraiLinks(texto) {
     const regex = /\[([^\]]*)\]\((https?:\/\/[^$#\s].[^\s]*)\)/gm;
@@ -16,33 +18,18 @@ function trataErro(erro) {
     throw new Error(chalk.red(erro));
 }
 
-export default async function pegaArquivo(caminhoDoArquivo) {
+export default async function pegarArquivo(caminho) {
+    const caminhoAbsoluto = path.join("__dirname", '..', caminho);
     const encoding = 'utf-8';
     try {
-        const texto = await fs.promises.readFile(caminhoDoArquivo, encoding)
+      const arquivos = await fs.promises.readdir(caminhoAbsoluto, { encoding });
+      const result = await Promise.all(arquivos.map(async (arquivo) => {
+        const localArquivo = `${caminhoAbsoluto}/${arquivo}`;
+        const texto = await fs.promises.readFile(localArquivo, encoding);
         return extraiLinks(texto);
-    } catch(erro) {
-        trataErro(erro);
-    } finally {
-        console.log(chalk.yellow('operação concluída'));
+      }));
+      return result;
+    } catch (erro) {
+      return trataErro(erro);
     }
-}
-
-
-// function pegaArquivo(caminhoDoArquivo) {
-//     const encoding = 'utf-8';
-//     fs.promises
-//     .readFile(caminhoDoArquivo, encoding)
-//     .then((texto) => console.log(chalk.green(texto)))
-//     .catch((erro) => trataErro(erro))
-// }
-
-// function pegaArquivo(caminhoDoArquivo) {
-//     const encoding = 'utf-8';
-//     fs.readFile(caminhoDoArquivo, encoding, (erro, texto) => {
-//         if(erro) {
-//             trataErro(erro);
-//         }
-//         console.log(chalk.green(texto));
-//     })
-// }
+   }
